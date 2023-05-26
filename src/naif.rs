@@ -6,11 +6,10 @@ pub struct Naif {
 
 
 impl Simulator for Naif {
-    fn from_objects<I: Iterator<Item = Object>>(objects: I) -> Self {
-        Naif { data: Vec::from_iter(objects) }
-    }
-    fn set_objects<I: Iterator<Item = Object>>(&mut self, objects: I) {
-        self.data = Vec::from_iter(objects);
+    fn from_objects<'a, I: Iterator<Item = &'a Object>>(objects: I) -> Self {
+        Naif { data: Vec::from_iter(objects.map(|o| {
+            (*o).to_owned()
+        }))}
     }
     fn get_objects<'a>(&'a self) -> std::slice::Iter<'a, Object> {
         self.data.iter()
