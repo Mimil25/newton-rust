@@ -21,13 +21,15 @@ impl Simulator for Naif {
         for i in 0..(self.data.len()-1) {
             for j in (i+1)..self.data.len() {
                 let f = force_between(&self.data[i], &self.data[j]) * dt;
-                self.data[i].v += f;
-                self.data[j].v -= f;
+                let inertia = 1. / self.data[i].m;
+                self.data[i].v += f * inertia;
+                let inertia = 1. / self.data[j].m;
+                self.data[j].v -= f * inertia;
             }
         }
 
         for o in self.data.iter_mut() {
-            o.p += o.v * dt;
+            o.p += o.v * dt
         }
     }
 }

@@ -109,7 +109,7 @@ pub mod sim {
         let mut potential_energy = 0.;
         for a in sim.get_objects() {
             for b in sim.get_objects() {
-                potential_energy -= force_between(a, b).norm() * (a.p - b.p).norm();
+                potential_energy += force_between(a, b).norm() * (a.p - b.p).norm();
             }
         }
         potential_energy /= 2.;
