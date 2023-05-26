@@ -11,7 +11,7 @@ use simulation::sim::Simulator;
 
 fn draw_simulation<S: sim::Simulator>(sim: &S) {
     for o in sim.get_objects() {
-        draw_circle(o.p.x, o.p.y, o.m.sqrt(), WHITE);
+        draw_circle(o.p.x, o.p.y, o.r, WHITE);
     }
 }
 
@@ -53,14 +53,17 @@ async fn main() {
                 y: gen_range(-1., 1.),
             },
             v: sim::Vec2 {
-                x: 0.,
-                y: 0.,
+                x: gen_range(-0.1, 0.1),
+                y: gen_range(-0.1, 0.1),
             },
-            m: 0.01
+            m: 0.1,
+            r: 0.1,
         }
     });
     let mut sim = naif::Naif::from_objects(objects.into_iter());
     loop {
+
+        let e = sim::total_energy(&sim);
         
         for _ in 0..100 {
             sim.step(0.001);
@@ -71,6 +74,9 @@ async fn main() {
         clear_background(BLACK);
 
         draw_simulation(&sim);
+
+        set_default_camera();
+        draw_text(format!("E = {}", e).as_str(), 10., 10., 20., GREEN);
 
         next_frame().await
     }

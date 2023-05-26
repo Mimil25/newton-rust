@@ -15,18 +15,15 @@ impl Simulator for Naif {
     fn get_objects<'a>(&'a self) -> std::slice::Iter<'a, Object> {
         self.data.iter()
     }
+    fn len(&self) -> usize {
+        self.data.len()
+    }
     fn step(&mut self, dt: f32) {
         for i in 0..(self.data.len()-1) {
             for j in (i+1)..self.data.len() {
-                let v: Vec2 = self.data[j].p - self.data[i].p; // vec from i to j
-                let d2 = v.norm2();
-                if d2.is_normal() {
-                    let d = d2.sqrt();
-                    let u = v * (1f32/d);
-                    let f = u *( self.data[i].m * self.data[j].m * dt / d2); // force of j on i
-                    self.data[i].v += f;
-                    self.data[j].v -= f;
-                }
+                let f = force_between(&self.data[i], &self.data[j]) * dt;
+                self.data[i].v += f;
+                self.data[j].v -= f;
             }
         }
 

@@ -32,6 +32,13 @@ pub mod sim {
         }
     }
 
+    impl MulAssign<f32> for Vec2 {
+        fn mul_assign(&mut self, rhs: f32) {
+            self.x *= rhs;
+            self.y *= rhs;
+        }
+    }
+
     impl Mul<f32> for Vec2 {
         type Output = Self;
         fn mul(self, k: f32) -> Vec2 {
@@ -43,6 +50,13 @@ pub mod sim {
     }
 
     impl Vec2 {
+        pub fn zero() -> Vec2 {
+            Vec2 {
+                x: 0.,
+                y: 0.,
+            }
+        }
+
         pub fn norm2(self) -> f32 {
             self.x*self.x + self.y*self.y
         }
@@ -56,12 +70,52 @@ pub mod sim {
         pub p: Vec2, // position
         pub v: Vec2, // velocity
         pub m: f32, // masse
+        pub r: f32, // radius
+    }
+
+    pub fn force_between(a: &Object, b: &Object) -> Vec2 {
+        let v: Vec2 = b.p - a.p; // vec from i to j
+        let d2 = v.norm2();
+        if d2.is_normal() {
+            let d = d2.sqrt();
+            let u = v * (1f32/d);
+            let f = u *( a.m * b.m / d2); // force of j on i
+            if d > a.r + b.r {
+                f
+            } else { // don't 
+                f * -1.
+            }
+        } else {
+            Vec2 {
+                x: 0.,
+                y: 0.,
+            }
+        }
     }
 
     pub trait Simulator {
         fn from_objects<I: Iterator<Item = Object>>(objects: I) -> Self;
         fn set_objects<I: Iterator<Item = Object>>(&mut self, objects: I);
         fn get_objects<'a>(&'a self) -> impl Iterator<Item = &'a Object>;
+        fn len(&self) -> usize;
         fn step(&mut self, dt: f32);
+    }
+
+    pub fn total_energy<S: Simulator>(sim: &S) -> f32 {
+        let mut cinetic_energy = 0.;
+        let mut average_pos = Vec2::zero();
+        for o in sim.get_objects() {
+            cinetic_energy += o.v.norm2() * o.m;
+            average_pos += o.p;
+        }
+        average_pos *= (sim.len() as f32).recip();
+        let mut potential_energy = 0.;
+        for a in sim.get_objects() {
+            for b in sim.get_objects() {
+                potential_energy += force_between(a, b).norm() * (a.p - b.p).norm();
+            }
+        }
+        potential_energy *= 0.5;
+        cinetic_energy + potential_energy
     }
 }
