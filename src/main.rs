@@ -47,10 +47,10 @@ impl Config {
         }
     }
     fn draw_energy(&self, x: f32, y: f32, font_size: f32) {
-        draw_text(format!("Ec = {}", self.cinetic_energy).as_str(), x, y, font_size, self.color);
-        draw_text(format!("Ep = {}", self.base_energy + self.potential_energy).as_str(), x, y+font_size, font_size, self.color);
-        draw_text(format!("E  = {}", self.cinetic_energy + self.potential_energy).as_str(), x, y+font_size*2., font_size, self.color);
-        draw_text(format!("base E = {}", self.base_energy).as_str(), x, y+font_size*3., font_size, self.color);
+        draw_text(format!("Ec   = {:^+010.}", self.cinetic_energy).as_str(), x, y, font_size, self.color);
+        draw_text(format!("Ep   = {:^+010.}", self.base_energy + self.potential_energy).as_str(), x, y+font_size, font_size, self.color);
+        draw_text(format!("E    = {:>+010.}", self.cinetic_energy + self.potential_energy).as_str(), x, y+font_size*2., font_size, self.color);
+        draw_text(format!("base E={:>+010.}", self.base_energy).as_str(), x, y+font_size*3., font_size, self.color);
     }
     fn calc_energy(&mut self) {
         (self.cinetic_energy, self.potential_energy) = sim_base::total_energy(&self.sim);
@@ -69,7 +69,7 @@ async fn main() {
         ..Default::default()
     };
 
-    let mut conf = Config {
+    let mut conf1 = Config {
         sim: sim::AnySim::try_from(("naif", generation::circles(10))).unwrap(),
         color: GREEN,
         base_energy:0.,
@@ -77,21 +77,36 @@ async fn main() {
         potential_energy:0.,
     };
 
-    conf.calc_base_energy();
+    let mut conf2 = Config {
+        sim: sim::AnySim::try_from(("naif", generation::circles(10))).unwrap(),
+        color: RED,
+        base_energy:0.,
+        cinetic_energy:0.,
+        potential_energy:0.,
+    };
+
+    conf1.calc_base_energy();
+    conf2.calc_base_energy();
 
     loop {
-        conf.sim.step(get_frame_time());
+        conf1.sim.step(get_frame_time()*0.3);
+        for _ in 0..10 {
+            conf2.sim.step(get_frame_time()*0.03);
+        }
         
         handle_camera(&mut cam2d, &mut old_mouse_pos, &mut old_offset);
         
         clear_background(BLACK);
 
-        conf.draw_bodys();
+        conf1.draw_bodys();
+        conf2.draw_bodys();
 
         set_default_camera();
 
-        conf.calc_energy();
-        conf.draw_energy(10., 10., 20.);
+        conf1.calc_energy();
+        conf1.draw_energy(10., 10., 20.);
+        conf2.calc_energy();
+        conf2.draw_energy(10., 100., 20.);
 
         next_frame().await
     }

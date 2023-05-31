@@ -89,7 +89,7 @@ pub fn force_between(a: &Object, b: &Object) -> Vec2 {
         if d > a.r + b.r {
             f
         } else { // repulsion
-            f * -10.
+            f * -1.
         }
     } else {
         Vec2::zero()
