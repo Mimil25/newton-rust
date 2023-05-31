@@ -1,18 +1,18 @@
 use crate::sim_base::*;
 
-pub struct Naif {
+pub struct RungeKutta {
     data: Vec<Object>,
 }
 
-impl<I: Iterator<Item = Object>> From<I> for Naif {
+impl<I: Iterator<Item = Object>> From<I> for RungeKutta {
     fn from(value: I) -> Self {
-        Naif {
+        RungeKutta {
             data: Vec::from_iter(value),
         }
     }
 }
 
-impl Simulator for Naif {
+impl Simulator for RungeKutta {
     fn get_objects<'a>(&'a self) -> Box<(dyn Iterator<Item = &'a Object> + 'a)> {
         Box::new(self.data.iter())
     }

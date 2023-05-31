@@ -1,19 +1,13 @@
 #![feature(return_position_impl_trait_in_trait)]
 
-mod simulation;
-use crate::simulation::sim;
+mod sim_base;
+mod generation;
+mod sim;
 mod naif;
-use crate::naif::Naif;
-
+mod runge_kutta;
 use macroquad::prelude::*;
 use macroquad::rand::gen_range;
-use simulation::sim::Simulator;
-
-fn draw_simulation<S: sim::Simulator>(sim: &S, color: Color) {
-    for o in sim.get_objects() {
-        draw_circle(o.p.x, o.p.y, o.r, color);
-    }
-}
+use sim_base::Simulator;
 
 fn handle_camera(cam: &mut Camera2D, old_mouse_pos: &mut Vec2, old_offset: &mut Vec2) {
     let dz = 0.3;
@@ -38,85 +32,66 @@ fn handle_camera(cam: &mut Camera2D, old_mouse_pos: &mut Vec2, old_offset: &mut 
     set_camera(cam);
 }
 
+struct Config {
+    sim: sim::AnySim,
+    color: Color,
+    base_energy: f32,
+    cinetic_energy: f32,
+    potential_energy: f32,
+}
+
+impl Config {
+    fn draw_bodys(&self) {
+        for o in self.sim.get_objects() {
+            draw_circle(o.p.x, o.p.y, o.r, self.color);
+        }
+    }
+    fn draw_energy(&self, x: f32, y: f32, font_size: f32) {
+        draw_text(format!("Ec = {}", self.cinetic_energy).as_str(), x, y, font_size, self.color);
+        draw_text(format!("Ep = {}", self.base_energy + self.potential_energy).as_str(), x, y+font_size, font_size, self.color);
+        draw_text(format!("E  = {}", self.cinetic_energy + self.potential_energy).as_str(), x, y+font_size*2., font_size, self.color);
+        draw_text(format!("base E = {}", self.base_energy).as_str(), x, y+font_size*3., font_size, self.color);
+    }
+    fn calc_energy(&mut self) {
+        (self.cinetic_energy, self.potential_energy) = sim_base::total_energy(&self.sim);
+    }
+    fn calc_base_energy(&mut self) {
+        self.calc_energy();
+        self.base_energy = self.cinetic_energy + self.potential_energy;
+    }
+}
+
 #[macroquad::main("Newton")]
 async fn main() {
-
-
     let mut old_mouse_pos = vec2(0., 0.);
     let mut old_offset = vec2(0., 0.);
     let mut cam2d = Camera2D{
         ..Default::default()
     };
-/*
-    let mut objects = Vec::new();
-    objects.resize_with(2, || {
-        sim::Object {
-            p: sim::Vec2 {
-                x: gen_range(-1., 1.),
-                y: gen_range(-1., 1.),
-            },
-            v: sim::Vec2 {
-                x: gen_range(0., 0.4) - 0.2,
-                y: gen_range(0., 0.4) - 0.2,
-            },
-            m: 0.5,
-            r: 0.1,
-        }
-    });
-*/
-    let objects = vec![
-        sim::Object {
-            p: sim::Vec2 {
-                x: 0.,
-                y: 0.,
-            },
-            v: sim::Vec2 {
-                x: 0.,
-                y: 0.,
-            },
-            m: 1.,
-            r: 0.2,
-        },
-        sim::Object {
-            p: sim::Vec2 {
-                x: 1.,
-                y: 0.,
-            },
-            v: sim::Vec2 {
-                x: 0.,
-                y: 1.,
-            },
-            m: 0.001,
-            r: 0.05,
-        }
-    ];
 
-    let mut sim1 = naif::Naif::from_objects(objects.iter());
-    let mut sim2 = naif::Naif::from_objects(objects.iter());
+    let mut conf = Config {
+        sim: sim::AnySim::try_from(("naif", generation::circles(10))).unwrap(),
+        color: GREEN,
+        base_energy:0.,
+        cinetic_energy:0.,
+        potential_energy:0.,
+    };
+
+    conf.calc_base_energy();
+
     loop {
-        sim1.step(0.01);
-        for _ in 0..10 {
-            sim2.step(0.001);
-        }
-
+        conf.sim.step(get_frame_time());
+        
         handle_camera(&mut cam2d, &mut old_mouse_pos, &mut old_offset);
-
+        
         clear_background(BLACK);
 
-        draw_simulation(&sim1, GREEN);
-        draw_simulation(&sim2, RED);
+        conf.draw_bodys();
 
         set_default_camera();
 
-        let (ce, pe) = sim::total_energy(&sim1);
-        draw_text(format!("Ec = {}",ce).as_str(), 10., 10., 20., GREEN);
-        draw_text(format!("Ep = {}",pe).as_str(), 10., 30., 20., GREEN);
-        draw_text(format!("E = {}",ce + pe).as_str(), 10., 50., 20., GREEN);
-
-        let (ce, pe) = sim::total_energy(&sim2);
-        draw_text(format!("Ec = {}",ce).as_str(), 10., 70., 20., RED);
-        draw_text(format!("Ep = {}",pe).as_str(), 10., 90., 20., RED);
-        draw_text(format!("E = {}",ce + pe).as_str(), 10., 110., 20., RED);
+        conf.calc_energy();
+        conf.draw_energy(10., 10., 20.);
 
         next_frame().await
     }
