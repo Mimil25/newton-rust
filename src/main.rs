@@ -4,6 +4,7 @@ mod sim_base;
 mod generation;
 mod sim;
 mod naif;
+mod euler;
 mod runge_kutta;
 use macroquad::prelude::*;
 use macroquad::rand::gen_range;
@@ -78,7 +79,7 @@ async fn main() {
     };
 
     let mut conf2 = Config {
-        sim: sim::AnySim::try_from(("naif", generation::circles(10))).unwrap(),
+        sim: sim::AnySim::try_from(("euler", generation::circles(10))).unwrap(),
         color: RED,
         base_energy:0.,
         cinetic_energy:0.,
@@ -90,9 +91,7 @@ async fn main() {
 
     loop {
         conf1.sim.step(get_frame_time()*0.3);
-        for _ in 0..10 {
-            conf2.sim.step(get_frame_time()*0.03);
-        }
+        conf2.sim.step(get_frame_time()*0.3);
         
         handle_camera(&mut cam2d, &mut old_mouse_pos, &mut old_offset);
         

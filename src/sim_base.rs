@@ -13,6 +13,16 @@ impl AddAssign for Vec2 {
     }
 }
 
+impl Add for Vec2 {
+    type Output = Self;
+    fn add(self, o: Vec2) -> Vec2 {
+        Vec2 {
+            x: self.x + o.x,
+            y: self.y + o.y
+        }
+    }
+}
+
 impl SubAssign for Vec2 {
     fn sub_assign(&mut self, rhs: Self) {
         self.x -= rhs.x;

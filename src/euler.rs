@@ -1,19 +1,19 @@
 use crate::sim_base::*;
 
-struct RK4Object {
+pub struct EObject {
     o: Object,
-    a: Vec2
+    a: Vec2,
 }
 
-pub struct RungeKutta4 {
-    data: Vec<RK4Object>,
+pub struct Euler {
+    data: Vec<EObject>,
 }
 
-impl<I: Iterator<Item = Object>> From<I> for RungeKutta4 {
+impl<I: Iterator<Item = Object>> From<I> for Euler {
     fn from(value: I) -> Self {
-        RungeKutta4 {
+        Euler {
             data: Vec::from_iter(value.map(|o| {
-                RK4Object {
+                EObject {
                     o,
                     a: Vec2::zero(),
                 }
@@ -22,7 +22,7 @@ impl<I: Iterator<Item = Object>> From<I> for RungeKutta4 {
     }
 }
 
-impl Simulator for RungeKutta4 {
+impl Simulator for Euler {
     fn get_objects<'a>(&'a self) -> Box<(dyn Iterator<Item = &'a Object> + 'a)> {
         Box::new(self.data.iter().map(|o| {
             &o.o
@@ -37,11 +37,11 @@ impl Simulator for RungeKutta4 {
         };
         for i in 0..(self.data.len()-1) {
             for j in (i+1)..self.data.len() {
-                let a = &self.data[i];
-                let b = &self.data[j];
-                
-                // TODO
-
+                let f = force_between(&self.data[i].o, &self.data[j].o);
+                let inertia = 1. / self.data[i].o.m;
+                self.data[i].a += f * inertia;
+                let inertia = 1. / self.data[j].o.m;
+                self.data[j].a -= f * inertia;
             }
         }
 
@@ -49,7 +49,7 @@ impl Simulator for RungeKutta4 {
             o.o.p += o.o.v * dt;
         }
         for o in self.data.iter_mut() {
-            o.o.v += o.a * dt;
+            o.o.v += o.o.a * dt;
         }
     }
 }
