@@ -1,9 +1,13 @@
 use std::{ops::*, iter::Sum};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Vec2 {
     pub x: f32,
     pub y: f32,
+}
+
+fn same_ref<T>(a: &T, b: &T) -> bool {
+    a as *const T == b as *const T
 }
 
 impl AddAssign for Vec2 {
@@ -89,7 +93,7 @@ impl Vec2 {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Object {
     pub p: Vec2, // position
     pub v: Vec2, // velocity
@@ -98,6 +102,9 @@ pub struct Object {
 }
 
 pub fn force_between(a: &Object, b: &Object) -> Vec2 {
+    if same_ref(a, b) {
+        Vec2::zero();
+    }
     let v: Vec2 = b.p - a.p; // vec from i to j
     let d2 = v.norm2();
     if d2.is_normal() {

@@ -89,8 +89,9 @@ async fn main() {
     conf2.calc_base_energy();
 
     loop {
-        conf1.sim.step(get_frame_time()*0.3);
-        conf2.sim.step(get_frame_time()*0.3);
+        let dt = get_frame_time() * 0.3;
+        conf1.sim.step(dt);
+        conf2.sim.step(dt);
         
         handle_camera(&mut cam2d, &mut old_mouse_pos, &mut old_offset);
         
