@@ -7,7 +7,6 @@ mod naif;
 mod euler;
 mod runge_kutta;
 use macroquad::prelude::*;
-use macroquad::rand::gen_range;
 use sim_base::Simulator;
 
 fn handle_camera(cam: &mut Camera2D, old_mouse_pos: &mut Vec2, old_offset: &mut Vec2) {
@@ -79,7 +78,7 @@ async fn main() {
     };
 
     let mut conf2 = Config {
-        sim: sim::AnySim::try_from(("euler", generation::circles(10))).unwrap(),
+        sim: sim::AnySim::try_from(("runge_kutta", generation::circles(10))).unwrap(),
         color: RED,
         base_energy:0.,
         cinetic_energy:0.,

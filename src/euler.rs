@@ -49,7 +49,7 @@ impl Simulator for Euler {
             o.o.p += o.o.v * dt;
         }
         for o in self.data.iter_mut() {
-            o.o.v += o.o.a * dt;
+            o.o.v += o.a * dt;
         }
     }
 }

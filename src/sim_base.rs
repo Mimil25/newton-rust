@@ -1,4 +1,4 @@
-use std::ops::*;
+use std::{ops::*, iter::Sum};
 
 #[derive(Clone, Copy)]
 pub struct Vec2 {
@@ -20,6 +20,14 @@ impl Add for Vec2 {
             x: self.x + o.x,
             y: self.y + o.y
         }
+    }
+}
+
+impl Sum for Vec2 {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.reduce(|a, e| {
+            a + e
+        }).unwrap_or(Vec2::zero())
     }
 }
 
