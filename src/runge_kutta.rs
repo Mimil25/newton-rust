@@ -36,11 +36,11 @@ impl Simulator for RungeKutta4 {
         let k1v: Vec<Vec2> = self.data.iter()
             .enumerate()
             .map(|(id, o)| {
-                self.acceleration(o, id)
+                self.acceleration(o, id) * o.m.recip()
             })
             .collect();
 
-        let ddt = dt * 0.5;
+        let ddt = dt / 2.;
         let k2p: Vec<Vec2> = k1p.iter()
             .zip(k1v.iter())
             .map(|(v, k1v)| {
@@ -76,11 +76,11 @@ impl Simulator for RungeKutta4 {
                     .map(|b| {
                         force_between(&o, &b)
                     })
-                    .sum::<Vec2>()
+                    .sum::<Vec2>() * o.m.recip()
             })
             .collect();
 
-        let k3p: Vec<Vec2> = k2p.iter()
+        let k3p: Vec<Vec2> = k1p.iter()
             .zip(k2v.iter())
             .map(|(v, k2v)| {
                 *v + *k2v * ddt
@@ -115,11 +115,11 @@ impl Simulator for RungeKutta4 {
                     .map(|b| {
                         force_between(&o, &b)
                     })
-                    .sum::<Vec2>()
+                    .sum::<Vec2>() * o.m.recip()
             })
             .collect();
 
-        let k4p: Vec<Vec2> = k3p.iter()
+        let k4p: Vec<Vec2> = k1p.iter()
             .zip(k3v.iter())
             .map(|(v, k3v)| {
                 *v + *k3v * dt
@@ -154,7 +154,7 @@ impl Simulator for RungeKutta4 {
                     .map(|b| {
                         force_between(&o, &b)
                     })
-                    .sum::<Vec2>()
+                    .sum::<Vec2>() * o.m.recip()
             })
             .collect();
 
@@ -174,7 +174,7 @@ impl Simulator for RungeKutta4 {
             });
         for ((o, dp), dv) in self.data.iter_mut().zip(dp).zip(dv) {
             o.p += dp;
-            o.v += dv * (1./o.m);
+            o.v += dv;
         }
     }
 }
