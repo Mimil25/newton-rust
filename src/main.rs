@@ -38,6 +38,9 @@ struct Config {
     base_energy: f32,
     cinetic_energy: f32,
     potential_energy: f32,
+    max_error:f32,
+    tt_error:f32,
+    nb_error:u32,
 }
 
 impl Config {
@@ -46,17 +49,31 @@ impl Config {
             draw_circle(o.p.x, o.p.y, o.r, self.color);
         }
     }
-    fn draw_energy(&self, x: f32, y: f32, font_size: f32) {
+    fn draw_energy(&self, x: f32, y: f32, font_size: f32) -> f32 {
+        let mut y = y;
         draw_text(format!("Ec   = {:^+010.}", self.cinetic_energy).as_str(), x, y, font_size, self.color);
-        draw_text(format!("Ep   = {:^+010.}", self.base_energy + self.potential_energy).as_str(), x, y+font_size, font_size, self.color);
-        draw_text(format!("E    = {:>+010.}", self.cinetic_energy + self.potential_energy).as_str(), x, y+font_size*2., font_size, self.color);
-        draw_text(format!("base E={:>+010.}", self.base_energy).as_str(), x, y+font_size*3., font_size, self.color);
+        y += font_size;
+        draw_text(format!("Ep   = {:^+010.}", self.base_energy + self.potential_energy).as_str(), x, y, font_size, self.color);
+        y += font_size;
+        draw_text(format!("E    = {:>+010.}", self.cinetic_energy + self.potential_energy).as_str(), x, y, font_size, self.color);
+        y += font_size;
+        draw_text(format!("base E={:>+010.}", self.base_energy).as_str(), x, y, font_size, self.color);
+        y += font_size;
+        draw_text(format!("max error ={}", self.max_error).as_str(), x, y, font_size, self.color);
+        y += font_size;
+        draw_text(format!("avg error ={}", self.tt_error / self.nb_error as f32).as_str(), x, y, font_size, self.color);
+        y + font_size
     }
     fn calc_energy(&mut self) {
         (self.cinetic_energy, self.potential_energy) = sim_base::total_energy(&self.sim);
+        let err = (self.base_energy - self.cinetic_energy - self.potential_energy).abs();
+        self.max_error = self.max_error.max(err);
+        self.tt_error += err;
+        self.nb_error += 1;
     }
     fn calc_base_energy(&mut self) {
         self.calc_energy();
+        self.max_error = 0.;
         self.base_energy = self.cinetic_energy + self.potential_energy;
     }
 }
@@ -75,6 +92,9 @@ async fn main() {
         base_energy:0.,
         cinetic_energy:0.,
         potential_energy:0.,
+        max_error:0.,
+        tt_error:0.,
+        nb_error:0,
     };
 
     let mut conf2 = Config {
@@ -83,13 +103,16 @@ async fn main() {
         base_energy:0.,
         cinetic_energy:0.,
         potential_energy:0.,
+        max_error:0.,
+        tt_error:0.,
+        nb_error:0,
     };
 
     conf1.calc_base_energy();
     conf2.calc_base_energy();
 
     loop {
-        let dt = get_frame_time() * 0.3;
+        let dt = 0.05;
         conf1.sim.step(dt);
         conf2.sim.step(dt);
         
@@ -103,9 +126,9 @@ async fn main() {
         set_default_camera();
 
         conf1.calc_energy();
-        conf1.draw_energy(10., 10., 20.);
+        let y = conf1.draw_energy(10., 20., 20.);
         conf2.calc_energy();
-        conf2.draw_energy(10., 100., 20.);
+        conf2.draw_energy(10., y, 20.);
 
         next_frame().await
     }

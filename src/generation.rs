@@ -24,7 +24,7 @@ pub fn circles(n: u32) -> impl Iterator<Item = sim_base::Object> + 'static {
         let mut o = sim_base::Object {
             p: sim_base::Vec2::zero(),
             v: sim_base::Vec2::zero(),
-            m: 0.01,
+            m: 0.1,
             r: 0.1
         };
         circle_orbit(
@@ -32,7 +32,7 @@ pub fn circles(n: u32) -> impl Iterator<Item = sim_base::Object> + 'static {
             center_mass,
             &mut o,
             center_radius + i as f32,
-            i as f32
+            (i*53) as f32
         );
         o
     }))
